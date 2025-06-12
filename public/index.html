@@ -1,27 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>US Service Status Monitor</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DownDetector</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Service Status Monitor</h1>
-  <div id="statuses">Loading...</div>
+  <h1>📡 Service Status</h1>
+  <div id="statuses" class="status-box"></div>
+
   <script>
-    async function update() {
+    async function fetchStatuses() {
       const res = await fetch('/status')
       const data = await res.json()
+
       const container = document.getElementById('statuses')
       container.innerHTML = ''
-      for (const [name, status] of Object.entries(data)) {
+
+      for (const [name, up] of Object.entries(data)) {
         const div = document.createElement('div')
-        div.textContent = `${name}: ${status ? 'UP ✅' : 'DOWN ❌'}`
-        div.className = status ? 'up' : 'down'
+        div.className = 'status ' + (up ? 'up' : 'down')
+        div.textContent = `${name}: ${up ? 'UP ✅' : 'DOWN ❌'}`
         container.appendChild(div)
       }
     }
-    update()
-    setInterval(update, 5000)
+
+    fetchStatuses()
+    setInterval(fetchStatuses, 10000)
   </script>
 </body>
 </html>

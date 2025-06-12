@@ -34,7 +34,6 @@ let lastStatuses = {}
 
 async function updateDiscordEmbed() {
   const fields = Object.entries(statuses).map(([name, up]) => ({
-    name,
     value: up ? '✅ UP' : '❌ DOWN',
     inline: true
   }))

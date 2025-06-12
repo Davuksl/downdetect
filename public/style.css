@@ -1,25 +1,38 @@
 body {
-  background-color: #0f0f0f;
-  color: #f1f1f1;
-  font-family: Arial, sans-serif;
-  text-align: center;
-  padding: 40px;
+  background-color: #0d1117;
+  color: #c9d1d9;
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 20px;
 }
 
 h1 {
-  color: #00d0ff;
-  margin-bottom: 30px;
+  color: #58a6ff;
 }
 
-#statuses div {
-  font-size: 20px;
-  margin: 10px 0;
+.status-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.up {
-  color: #00ff00;
+.status {
+  background-color: #161b22;
+  padding: 10px 15px;
+  border-radius: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
 }
 
-.down {
-  color: #ff3333;
+.status:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(90, 156, 255, 0.3);
+}
+
+.status.up {
+  border-left: 4px solid #2ecc71;
+}
+
+.status.down {
+  border-left: 4px solid #e74c3c;
 }

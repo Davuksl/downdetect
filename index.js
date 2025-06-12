@@ -31,7 +31,12 @@ let lastStatuses = {}
 async function checkServices() {
   for (const service of services) {
     try {
-      await axios.get(service.url, { timeout: 5000 })
+      await axios.get(service.url, {
+    timeout: 5000,
+    headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+    }
+    })
       statuses[service.name] = true
     } catch {
       statuses[service.name] = false

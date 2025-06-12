@@ -1,5 +1,5 @@
 const express = require('express')
-const axios = require('axios')
+const puppeteer = require('puppeteer')
 const app = express()
 const port = 3000
 
@@ -24,40 +24,42 @@ const services = [
 ]
 
 const discordWebhook = 'https://discord.com/api/webhooks/1382821667524448448/0iKn7OFm2hP2SBYOMH9VWb_wx7pKxVbjAIhUvVICKDxPRuVXdT1bPRYlXFceV-_8cfmO'
-
 let statuses = {}
 let lastStatuses = {}
 
 async function checkServices() {
+  const browser = await puppeteer.launch({ headless: 'new' })
+  const page = await browser.newPage()
+
   for (const service of services) {
     try {
-      await axios.head(service.url, {
-    timeout: 5000,
-    headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9',
-        'Accept-Language': 'en-US,en;q=0.9'
-    }
-    })
-      statuses[service.name] = true
+      const res = await page.goto(service.url, { timeout: 10000, waitUntil: 'domcontentloaded' })
+      const statusCode = res.status()
+      statuses[service.name] = statusCode < 400
     } catch {
       statuses[service.name] = false
     }
 
     if (lastStatuses[service.name] !== undefined && lastStatuses[service.name] !== statuses[service.name]) {
       if (!statuses[service.name]) {
-        await axios.post(discordWebhook, {
-          content: `❌ **${service.name}** is **DOWN**`
+        await fetch(discordWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: `❌ **${service.name}** is **DOWN**` })
         }).catch(() => {})
       } else {
-        await axios.post(discordWebhook, {
-          content: `✅ **${service.name}** is **BACK UP**`
+        await fetch(discordWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: `✅ **${service.name}** is **BACK UP**` })
         }).catch(() => {})
       }
     }
 
     lastStatuses[service.name] = statuses[service.name]
   }
+
+  await browser.close()
 }
 
 setInterval(checkServices, 30000)

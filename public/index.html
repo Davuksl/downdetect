@@ -1,15 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Service Status Monitor</title>
-  <style>
-    body { font-family: sans-serif; background: #111; color: #fff; text-align: center; padding-top: 50px }
-    .up { color: #0f0 }
-    .down { color: #f00 }
-  </style>
+  <title>US Service Status Monitor</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Service Status</h1>
+  <h1>Service Status Monitor</h1>
   <div id="statuses">Loading...</div>
   <script>
     async function update() {
@@ -19,7 +15,7 @@
       container.innerHTML = ''
       for (const [name, status] of Object.entries(data)) {
         const div = document.createElement('div')
-        div.textContent = `${name}: ${status ? 'UP' : 'DOWN'}`
+        div.textContent = `${name}: ${status ? 'UP ✅' : 'DOWN ❌'}`
         div.className = status ? 'up' : 'down'
         container.appendChild(div)
       }

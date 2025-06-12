@@ -13,10 +13,20 @@ const services = [
   { name: 'NPM', url: 'https://registry.npmjs.org' },
   { name: 'AWS', url: 'https://aws.amazon.com' },
   { name: 'Roblox', url: 'https://www.roblox.com' },
-  { name: 'OpenAI', url: 'https://openai.com' }
+  { name: 'OpenAI', url: 'https://openai.com' },
+  { name: 'Steam', url: 'https://store.steampowered.com' },
+  { name: 'Reddit', url: 'https://www.reddit.com' },
+  { name: 'Twitch', url: 'https://www.twitch.tv' },
+  { name: 'ExitLag', url: 'https://www.exitlag.com' },
+  { name: 'Epic Games', url: 'https://www.epicgames.com' },
+  { name: 'Netflix', url: 'https://www.netflix.com' },
+  { name: 'X (Twitter)', url: 'https://twitter.com' }
 ]
 
+const discordWebhook = 'https://discord.com/api/webhooks/1382821667524448448/0iKn7OFm2hP2SBYOMH9VWb_wx7pKxVbjAIhUvVICKDxPRuVXdT1bPRYlXFceV-_8cfmO'
+
 let statuses = {}
+let lastStatuses = {}
 
 async function checkServices() {
   for (const service of services) {
@@ -26,6 +36,20 @@ async function checkServices() {
     } catch {
       statuses[service.name] = false
     }
+
+    if (lastStatuses[service.name] !== undefined && lastStatuses[service.name] !== statuses[service.name]) {
+      if (!statuses[service.name]) {
+        await axios.post(discordWebhook, {
+          content: `❌ **${service.name}** is **DOWN**`
+        }).catch(() => {})
+      } else {
+        await axios.post(discordWebhook, {
+          content: `✅ **${service.name}** is **BACK UP**`
+        }).catch(() => {})
+      }
+    }
+
+    lastStatuses[service.name] = statuses[service.name]
   }
 }
 

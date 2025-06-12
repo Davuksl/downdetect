@@ -1,10 +1,10 @@
 {
   "name": "downdetect",
   "version": "1.0.0",
-  "description": "",
+  "description": "Auto website availability monitor like Downdetector",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
@@ -17,5 +17,10 @@
   "bugs": {
     "url": "https://github.com/Davuksl/downdetect/issues"
   },
-  "homepage": "https://github.com/Davuksl/downdetect#readme"
+  "homepage": "https://github.com/Davuksl/downdetect#readme",
+  "dependencies": {
+    "express": "^4.18.4",
+    "got": "^12.6.0",
+    "node-fetch": "^2.6.11"
+  }
 }

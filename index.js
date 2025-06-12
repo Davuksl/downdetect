@@ -28,39 +28,34 @@ const discordWebhook = 'https://discord.com/api/webhooks/1382821667524448448/0iK
 let statuses = {}
 let lastStatuses = {}
 
-const got = require('got')
-
 async function checkServices() {
   for (const service of services) {
     try {
-      const res = await got(service.url, {
-        timeout: { request: 5000 },
-        followRedirect: true,
-        headers: {
-          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-          'accept': 'text/html,application/xhtml+xml',
-          'accept-language': 'en-US,en;q=0.9'
-        }
+      await axios.get(service.url, { 
+        timeout: 5000,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
       })
-      statuses[service.name] = res.statusCode < 400
+      statuses[service.name] = true
     } catch {
       statuses[service.name] = false
     }
 
     if (lastStatuses[service.name] !== undefined && lastStatuses[service.name] !== statuses[service.name]) {
-      if (!statuses[service.name]) {
-        await fetch(discordWebhook, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: `❌ **${service.name}** is **DOWN**` })
-        }).catch(() => {})
-      } else {
-        await fetch(discordWebhook, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: `✅ **${service.name}** is **BACK UP**` })
-        }).catch(() => {})
-      }
+      try {
+        if (!statuses[service.name]) {
+          await axios.post(discordWebhook, {
+            content: `❌ **${service.name}** is **DOWN**`
+          }, {
+            headers: { 'Content-Type': 'application/json' }
+          })
+        } else {
+          await axios.post(discordWebhook, {
+            content: `✅ **${service.name}** is **BACK UP**`
+          }, {
+            headers: { 'Content-Type': 'application/json' }
+          })
+        }
+      } catch {}
     }
 
     lastStatuses[service.name] = statuses[service.name]

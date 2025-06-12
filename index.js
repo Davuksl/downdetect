@@ -1,6 +1,5 @@
 const express = require('express')
 const axios = require('axios')
-const fs = require('fs')
 const app = express()
 const port = 3000
 
@@ -32,27 +31,29 @@ let statuses = {}
 let lastStatuses = {}
 let messageId = null
 
-if (fs.existsSync('message_id.txt')) {
-  messageId = fs.readFileSync('message_id.txt', 'utf-8')
-}
+async function findOrCreateWebhookMessage(embed) {
+  try {
+    const res = await axios.get(`${webhookBaseUrl}/messages`, {
+      params: { limit: 10 }
+    })
 
-async function checkServices() {
-  for (const service of services) {
-    try {
-      await axios.get(service.url, {
-        timeout: 5000,
-        headers: {
-          'User-Agent': 'Mozilla/5.0'
-        },
-        validateStatus: status => status < 500
+    const found = res.data.find(msg =>
+      msg.content === '**Service status monitor started**'
+    )
+
+    if (found) {
+      messageId = found.id
+    } else {
+      const post = await axios.post(webhookBaseUrl, {
+        content: '**Service status monitor started**',
+        embeds: [embed]
       })
-      statuses[service.name] = true
-    } catch {
-      statuses[service.name] = false
-    }
-  }
 
-  await updateDiscordEmbed()
+      messageId = post.data.id
+    }
+  } catch (err) {
+    console.error('[findOrCreateWebhookMessage ERROR]', err.response?.data || err.message)
+  }
 }
 
 async function updateDiscordEmbed() {
@@ -69,28 +70,45 @@ async function updateDiscordEmbed() {
     fields
   }
 
-  if (!messageId) {
-const res = await axios.post(webhookBaseUrl, {
-  content: '**Service status monitor started**',
-  embeds: [embed]
-}).catch(err => {
-  console.error('[WEBHOOK ERROR]', err.response?.data || err.message)
-  return null
-})
+  if (!messageId) await findOrCreateWebhookMessage(embed)
 
-    if (res?.data?.id) {
-        messageId = res.data.id
-        fs.writeFileSync('message_id.txt', String(messageId))
-    } else {
-        console.error('[FAILED TO CREATE INITIAL MESSAGE]')
-    }
-  } else {
+  if (messageId) {
     await axios.patch(`${webhookBaseUrl}/messages/${messageId}`, {
       embeds: [embed]
     }).catch(err => {
       console.error('[UPDATE FAIL]', err.response?.data || err.message)
     })
   }
+}
+
+async function checkServices() {
+  for (const service of services) {
+    try {
+      await axios.get(service.url, {
+        timeout: 5000,
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        validateStatus: s => s < 500
+      })
+      statuses[service.name] = true
+    } catch {
+      statuses[service.name] = false
+    }
+
+    if (
+      lastStatuses[service.name] !== undefined &&
+      lastStatuses[service.name] !== statuses[service.name]
+    ) {
+      const text = statuses[service.name]
+        ? `✅ **${service.name}** is **BACK UP**`
+        : `❌ **${service.name}** is **DOWN**`
+
+      await axios.post(webhookBaseUrl, { content: text }).catch(() => {})
+    }
+
+    lastStatuses[service.name] = statuses[service.name]
+  }
+
+  await updateDiscordEmbed()
 }
 
 setInterval(checkServices, 30000)

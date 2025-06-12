@@ -1,5 +1,5 @@
 const express = require('express')
-const puppeteer = require('puppeteer')
+const axios = require('axios')
 const app = express()
 const port = 3000
 
@@ -24,18 +24,25 @@ const services = [
 ]
 
 const discordWebhook = 'https://discord.com/api/webhooks/1382821667524448448/0iKn7OFm2hP2SBYOMH9VWb_wx7pKxVbjAIhUvVICKDxPRuVXdT1bPRYlXFceV-_8cfmO'
+
 let statuses = {}
 let lastStatuses = {}
 
-async function checkServices() {
-  const browser = await puppeteer.launch({ headless: 'new' })
-  const page = await browser.newPage()
+const got = require('got')
 
+async function checkServices() {
   for (const service of services) {
     try {
-      const res = await page.goto(service.url, { timeout: 10000, waitUntil: 'domcontentloaded' })
-      const statusCode = res.status()
-      statuses[service.name] = statusCode < 400
+      const res = await got(service.url, {
+        timeout: { request: 5000 },
+        followRedirect: true,
+        headers: {
+          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+          'accept': 'text/html,application/xhtml+xml',
+          'accept-language': 'en-US,en;q=0.9'
+        }
+      })
+      statuses[service.name] = res.statusCode < 400
     } catch {
       statuses[service.name] = false
     }
@@ -58,8 +65,6 @@ async function checkServices() {
 
     lastStatuses[service.name] = statuses[service.name]
   }
-
-  await browser.close()
 }
 
 setInterval(checkServices, 30000)

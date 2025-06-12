@@ -16,7 +16,7 @@ const services = [
   { name: 'OpenAI', url: 'https://openai.com' },
   { name: 'Steam', url: 'https://store.steampowered.com' },
   { name: 'Reddit', url: 'https://www.reddit.com' },
-  { name: 'Twitch', url: 'https://www.twitch.tv' },
+  { name: 'Twitch', url: 'https://status.twitch.tv' },
   { name: 'ExitLag', url: 'https://www.exitlag.com' },
   { name: 'Epic Games', url: 'https://www.epicgames.com' },
   { name: 'Netflix', url: 'https://www.netflix.com' },

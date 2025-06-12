@@ -1,0 +1,25 @@
+body {
+  background-color: #0f0f0f;
+  color: #f1f1f1;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 40px;
+}
+
+h1 {
+  color: #00d0ff;
+  margin-bottom: 30px;
+}
+
+#statuses div {
+  font-size: 20px;
+  margin: 10px 0;
+}
+
+.up {
+  color: #00ff00;
+}
+
+.down {
+  color: #ff3333;
+}

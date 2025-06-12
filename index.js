@@ -70,12 +70,20 @@ async function updateDiscordEmbed() {
   }
 
   if (!messageId) {
-    const res = await axios.post(webhookBaseUrl, {
-      content: '**Service status monitor started**',
-      embeds: [embed]
-    })
-    messageId = res.data.id
-    fs.writeFileSync('message_id.txt', messageId)
+const res = await axios.post(webhookBaseUrl, {
+  content: '**Service status monitor started**',
+  embeds: [embed]
+}).catch(err => {
+  console.error('[WEBHOOK ERROR]', err.response?.data || err.message)
+  return null
+})
+
+    if (res?.data?.id) {
+        messageId = res.data.id
+        fs.writeFileSync('message_id.txt', String(messageId))
+    } else {
+        console.error('[FAILED TO CREATE INITIAL MESSAGE]')
+    }
   } else {
     await axios.patch(`${webhookBaseUrl}/messages/${messageId}`, {
       embeds: [embed]

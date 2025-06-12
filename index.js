@@ -1,5 +1,6 @@
 const express = require('express')
 const axios = require('axios')
+const fs = require('fs')
 const app = express()
 const port = 3000
 
@@ -23,30 +24,35 @@ const services = [
   { name: 'X (Twitter)', url: 'https://twitter.com' }
 ]
 
-const webhookId = '1382821608699330771'
-const messageId = '1382822541583716435'
+const webhookId = '1382821667524448448'
 const webhookToken = '0iKn7OFm2hP2SBYOMH9VWb_wx7pKxVbjAIhUvVICKDxPRuVXdT1bPRYlXFceV-_8cfmO'
+const webhookBaseUrl = `https://discord.com/api/webhooks/${webhookId}/${webhookToken}`
 
 let statuses = {}
 let lastStatuses = {}
+let messageId = null
+
+if (fs.existsSync('message_id.txt')) {
+  messageId = fs.readFileSync('message_id.txt', 'utf-8')
+}
 
 async function checkServices() {
   for (const service of services) {
     try {
       await axios.get(service.url, {
         timeout: 5000,
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+        headers: {
+          'User-Agent': 'Mozilla/5.0'
+        },
         validateStatus: status => status < 500
       })
       statuses[service.name] = true
     } catch {
       statuses[service.name] = false
     }
-
-    lastStatuses[service.name] = statuses[service.name]
   }
 
-  updateDiscordEmbed()
+  await updateDiscordEmbed()
 }
 
 async function updateDiscordEmbed() {
@@ -58,24 +64,25 @@ async function updateDiscordEmbed() {
 
   const embed = {
     title: '📡 Service Status Monitor',
-    color: statusesHasDown() ? 0xED4245 : 0x57F287,
+    color: Object.values(statuses).some(v => !v) ? 0xED4245 : 0x57F287,
     timestamp: new Date().toISOString(),
     fields
   }
 
-  const url = `https://discord.com/api/webhooks/${webhookId}/${webhookToken}/messages/${messageId}`
-
-  await axios.patch(url, { embeds: [embed] }, {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  }).catch(err => {
-    console.error('[embed update fail]', err.response?.data || err.message)
-  })
-}
-
-function statusesHasDown() {
-  return Object.values(statuses).some(v => !v)
+  if (!messageId) {
+    const res = await axios.post(webhookBaseUrl, {
+      content: '**Service status monitor started**',
+      embeds: [embed]
+    })
+    messageId = res.data.id
+    fs.writeFileSync('message_id.txt', messageId)
+  } else {
+    await axios.patch(`${webhookBaseUrl}/messages/${messageId}`, {
+      embeds: [embed]
+    }).catch(err => {
+      console.error('[UPDATE FAIL]', err.response?.data || err.message)
+    })
+  }
 }
 
 setInterval(checkServices, 30000)

@@ -27,34 +27,10 @@ const webhookId = '1382821667524448448'
 const webhookToken = '0iKn7OFm2hP2SBYOMH9VWb_wx7pKxVbjAIhUvVICKDxPRuVXdT1bPRYlXFceV-_8cfmO'
 const webhookBaseUrl = `https://discord.com/api/webhooks/${webhookId}/${webhookToken}`
 
+const messageId = '1382840425231945878'
+
 let statuses = {}
 let lastStatuses = {}
-let messageId = null
-
-async function findOrCreateWebhookMessage(embed) {
-  try {
-    const res = await axios.get(`${webhookBaseUrl}/messages`, {
-      params: { limit: 10 }
-    })
-
-    const found = res.data.find(msg =>
-      msg.content === '**Service status monitor started**'
-    )
-
-    if (found) {
-      messageId = found.id
-    } else {
-      const post = await axios.post(webhookBaseUrl, {
-        content: '**Service status monitor started**',
-        embeds: [embed]
-      })
-
-      messageId = post.data.id
-    }
-  } catch (err) {
-    console.error('[findOrCreateWebhookMessage ERROR]', err.response?.data || err.message)
-  }
-}
 
 async function updateDiscordEmbed() {
   const fields = Object.entries(statuses).map(([name, up]) => ({
@@ -70,15 +46,11 @@ async function updateDiscordEmbed() {
     fields
   }
 
-  if (!messageId) await findOrCreateWebhookMessage(embed)
-
-  if (messageId) {
-    await axios.patch(`${webhookBaseUrl}/messages/${messageId}`, {
-      embeds: [embed]
-    }).catch(err => {
-      console.error('[UPDATE FAIL]', err.response?.data || err.message)
-    })
-  }
+  await axios.patch(`${webhookBaseUrl}/messages/${messageId}`, {
+    embeds: [embed]
+  }).catch(err => {
+    console.error('[UPDATE FAIL]', err.response?.data || err.message)
+  })
 }
 
 async function checkServices() {

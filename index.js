@@ -99,6 +99,7 @@ async function updateDiscordEmbed() {
       fs.writeFileSync('message_id.txt', messageId)
     }
   } else {
+    if (!embed || typeof embed !== 'object' || !embed.fields?.length) return
     await axios.patch(`${webhookBaseUrl}/messages/${messageId}`, {
       embeds: [embed]
     }).catch(() => {})

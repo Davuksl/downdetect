@@ -1,25 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Status Monitor</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Downdetector</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>📡 Service Monitor</h1>
-  <div id="services"></div>
+  <h1>📡 Service Status</h1>
+  <div id="statuses" class="status-box"></div>
 
-  <div id="modal" class="hidden">
-    <div class="modal-content">
-      <span id="close">&times;</span>
-      <h2 id="modal-title"></h2>
-      <p><b>URL:</b> <span id="url"></span></p>
-      <p><b>IP:</b> <span id="ip"></span></p>
-      <p><b>Ping:</b> <span id="ping"></span></p>
-      <p><b>Status:</b> <span id="alive"></span></p>
-    </div>
-  </div>
+  <script>
+    async function fetchStatuses() {
+      const res = await fetch('/status')
+      const data = await res.json()
 
-  <script src="script.js"></script>
+      const container = document.getElementById('statuses')
+      container.innerHTML = ''
+
+      for (const [name, up] of Object.entries(data)) {
+        const div = document.createElement('div')
+        div.className = 'status ' + (up ? 'up' : 'down')
+        div.textContent = `${name}: ${up ? 'UP ✅' : 'DOWN ❌'}`
+        container.appendChild(div)
+      }
+    }
+
+    fetchStatuses()
+    setInterval(fetchStatuses, 10000)
+  </script>
 </body>
 </html>

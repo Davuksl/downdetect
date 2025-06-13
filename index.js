@@ -1,8 +1,5 @@
 const express = require('express')
 const axios = require('axios')
-const fs = require('fs')
-const dns = require('dns').promises
-const ping = require('ping')
 const app = express()
 const port = 3000
 
@@ -30,49 +27,11 @@ const webhookId = '1382821667524448448'
 const webhookToken = '0iKn7OFm2hP2SBYOMH9VWb_wx7pKxVbjAIhUvVICKDxPRuVXdT1bPRYlXFceV-_8cfmO'
 const webhookBaseUrl = `https://discord.com/api/webhooks/${webhookId}/${webhookToken}`
 
+// это id одного уже созданного сообщения (скопируй из Discord ссылки)
+const messageId = '1382822541583716435'
+
 let statuses = {}
 let lastStatuses = {}
-let messageId = null
-
-if (fs.existsSync('message_id.txt')) {
-  messageId = fs.readFileSync('message_id.txt', 'utf-8')
-}
-
-async function getServiceInfo(service) {
-  const url = new URL(service.url)
-  const hostname = url.hostname
-  try {
-    const [ip] = await dns.resolve4(hostname)
-    const pingRes = await ping.promise.probe(hostname, { timeout: 2 })
-    return {
-      ip,
-      ping: pingRes.time,
-      alive: pingRes.alive
-    }
-  } catch {
-    return {
-      ip: 'N/A',
-      ping: 'N/A',
-      alive: false
-    }
-  }
-}
-
-async function checkServices() {
-  for (const service of services) {
-    try {
-      await axios.get(service.url, {
-        timeout: 5000,
-        headers: { 'User-Agent': 'Mozilla/5.0' },
-        validateStatus: s => s < 500
-      })
-      statuses[service.name] = true
-    } catch {
-      statuses[service.name] = false
-    }
-  }
-  await updateDiscordEmbed()
-}
 
 async function updateDiscordEmbed() {
   const fields = Object.entries(statuses).map(([name, up]) => ({
@@ -88,43 +47,48 @@ async function updateDiscordEmbed() {
     fields
   }
 
-  if (!messageId) {
-    const res = await axios.post(webhookBaseUrl, {
-      content: '**Service status monitor started**',
-      embeds: [embed]
-    }).catch(() => null)
-
-    if (res?.data?.id) {
-      messageId = res.data.id
-      fs.writeFileSync('message_id.txt', messageId)
-    }
-  } else {
-    if (!embed || typeof embed !== 'object' || !embed.fields?.length) return
-    await axios.patch(`${webhookBaseUrl}/messages/${messageId}`, {
-      embeds: [embed]
-    }).catch(() => {})
-  }
+  await axios.patch(`${webhookBaseUrl}/messages/${messageId}`, {
+    embeds: [embed]
+  }).catch(err => {
+    console.error('[UPDATE FAIL]', err.response?.data || err.message)
+  })
 }
+
+async function checkServices() {
+  for (const service of services) {
+    try {
+      await axios.get(service.url, {
+        timeout: 5000,
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        validateStatus: s => s < 500
+      })
+      statuses[service.name] = true
+    } catch {
+      statuses[service.name] = false
+    }
+
+    if (
+      lastStatuses[service.name] !== undefined &&
+      lastStatuses[service.name] !== statuses[service.name]
+    ) {
+      const text = statuses[service.name]
+        ? `✅ **${service.name}** is **BACK UP**`
+        : `❌ **${service.name}** is **DOWN**`
+
+      await axios.post(webhookBaseUrl, { content: text }).catch(() => {})
+    }
+
+    lastStatuses[service.name] = statuses[service.name]
+  }
+
+  await updateDiscordEmbed()
+}
+
+setInterval(checkServices, 30000)
+checkServices()
 
 app.get('/status', (req, res) => {
   res.json(statuses)
 })
-
-app.get('/info/:name', async (req, res) => {
-  const service = services.find(s => s.name === req.params.name)
-  if (!service) return res.status(404).json({ error: 'Not found' })
-
-  const info = await getServiceInfo(service)
-  res.json({
-    name: service.name,
-    url: service.url,
-    ip: info.ip,
-    ping: info.ping,
-    alive: info.alive
-  })
-})
-
-setInterval(checkServices, 30000)
-checkServices()
 
 app.listen(port)

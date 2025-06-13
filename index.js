@@ -1,5 +1,8 @@
 const express = require('express')
 const axios = require('axios')
+const fs = require('fs')
+const dns = require('dns').promises
+const ping = require('ping')
 const app = express()
 const port = 3000
 
@@ -27,29 +30,32 @@ const webhookId = '1382821667524448448'
 const webhookToken = '0iKn7OFm2hP2SBYOMH9VWb_wx7pKxVbjAIhUvVICKDxPRuVXdT1bPRYlXFceV-_8cfmO'
 const webhookBaseUrl = `https://discord.com/api/webhooks/${webhookId}/${webhookToken}`
 
-const messageId = '1382840425231945878'
-
 let statuses = {}
 let lastStatuses = {}
+let messageId = null
 
-async function updateDiscordEmbed() {
-  const fields = Object.entries(statuses).map(([name, up]) => ({
-    value: up ? '✅ UP' : '❌ DOWN',
-    inline: true
-  }))
+if (fs.existsSync('message_id.txt')) {
+  messageId = fs.readFileSync('message_id.txt', 'utf-8')
+}
 
-  const embed = {
-    title: '📡 Service Status Monitor',
-    color: Object.values(statuses).some(v => !v) ? 0xED4245 : 0x57F287,
-    timestamp: new Date().toISOString(),
-    fields
+async function getServiceInfo(service) {
+  const url = new URL(service.url)
+  const hostname = url.hostname
+  try {
+    const [ip] = await dns.resolve4(hostname)
+    const pingRes = await ping.promise.probe(hostname, { timeout: 2 })
+    return {
+      ip,
+      ping: pingRes.time,
+      alive: pingRes.alive
+    }
+  } catch {
+    return {
+      ip: 'N/A',
+      ping: 'N/A',
+      alive: false
+    }
   }
-
-  await axios.patch(`${webhookBaseUrl}/messages/${messageId}`, {
-    embeds: [embed]
-  }).catch(err => {
-    console.error('[UPDATE FAIL]', err.response?.data || err.message)
-  })
 }
 
 async function checkServices() {
@@ -64,29 +70,60 @@ async function checkServices() {
     } catch {
       statuses[service.name] = false
     }
-
-    if (
-      lastStatuses[service.name] !== undefined &&
-      lastStatuses[service.name] !== statuses[service.name]
-    ) {
-      const text = statuses[service.name]
-        ? `✅ **${service.name}** is **BACK UP**`
-        : `❌ **${service.name}** is **DOWN**`
-
-      await axios.post(webhookBaseUrl, { content: text }).catch(() => {})
-    }
-
-    lastStatuses[service.name] = statuses[service.name]
   }
-
   await updateDiscordEmbed()
 }
 
-setInterval(checkServices, 30000)
-checkServices()
+async function updateDiscordEmbed() {
+  const fields = Object.entries(statuses).map(([name, up]) => ({
+    name,
+    value: up ? '✅ UP' : '❌ DOWN',
+    inline: true
+  }))
+
+  const embed = {
+    title: '📡 Service Status Monitor',
+    color: Object.values(statuses).some(v => !v) ? 0xED4245 : 0x57F287,
+    timestamp: new Date().toISOString(),
+    fields
+  }
+
+  if (!messageId) {
+    const res = await axios.post(webhookBaseUrl, {
+      content: '**Service status monitor started**',
+      embeds: [embed]
+    }).catch(() => null)
+
+    if (res?.data?.id) {
+      messageId = res.data.id
+      fs.writeFileSync('message_id.txt', messageId)
+    }
+  } else {
+    await axios.patch(`${webhookBaseUrl}/messages/${messageId}`, {
+      embeds: [embed]
+    }).catch(() => {})
+  }
+}
 
 app.get('/status', (req, res) => {
   res.json(statuses)
 })
+
+app.get('/info/:name', async (req, res) => {
+  const service = services.find(s => s.name === req.params.name)
+  if (!service) return res.status(404).json({ error: 'Not found' })
+
+  const info = await getServiceInfo(service)
+  res.json({
+    name: service.name,
+    url: service.url,
+    ip: info.ip,
+    ping: info.ping,
+    alive: info.alive
+  })
+})
+
+setInterval(checkServices, 30000)
+checkServices()
 
 app.listen(port)

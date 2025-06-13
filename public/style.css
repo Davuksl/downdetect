@@ -1,38 +1,48 @@
-body {
-  background-color: #0d1117;
-  color: #c9d1d9;
-  font-family: 'Segoe UI', sans-serif;
-  margin: 0;
-  padding: 20px;
-}
-
-h1 {
-  color: #58a6ff;
-}
-
-.status-box {
+.modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
-.status {
+.modal:not(.hidden) {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal-content {
   background-color: #161b22;
-  padding: 10px 15px;
-  border-radius: 8px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 25px 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  color: #c9d1d9;
+  max-width: 400px;
+  text-align: center;
+  transform: translateY(-20px);
+  animation: slideIn 0.3s forwards;
+}
+
+@keyframes slideIn {
+  to { transform: translateY(0); }
+}
+
+.close {
+  position: absolute;
+  top: 15px;
+  right: 25px;
+  font-size: 28px;
+  color: #aaa;
   cursor: pointer;
+  transition: color 0.2s;
 }
 
-.status:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 15px rgba(90, 156, 255, 0.3);
-}
-
-.status.up {
-  border-left: 4px solid #2ecc71;
-}
-
-.status.down {
-  border-left: 4px solid #e74c3c;
+.close:hover {
+  color: white;
 }

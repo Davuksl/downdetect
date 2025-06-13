@@ -3,12 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DownDetector</title>
+  <title>Downdetector</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <h1>📡 Service Status</h1>
   <div id="statuses" class="status-box"></div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 id="modal-title"></h2>
+      <p id="modal-message"></p>
+    </div>
+  </div>
 
   <script>
     async function fetchStatuses() {
@@ -22,8 +30,27 @@
         const div = document.createElement('div')
         div.className = 'status ' + (up ? 'up' : 'down')
         div.textContent = `${name}: ${up ? 'UP ✅' : 'DOWN ❌'}`
+        div.onclick = () => showModal(name, up)
         container.appendChild(div)
       }
+    }
+
+    const modal = document.getElementById('modal')
+    const modalTitle = document.getElementById('modal-title')
+    const modalMessage = document.getElementById('modal-message')
+    const closeBtn = document.querySelector('.close')
+
+    function showModal(name, up) {
+      modalTitle.textContent = `${name}`
+      modalMessage.textContent = up
+        ? `🎉 Всё работает как часы. TTL стабильный, пинг ниже твоей самооценки.`
+        : `🔥 ${name} лёг. TTL упал, серверы вспоминают былое.`
+      modal.classList.remove('hidden')
+    }
+
+    closeBtn.onclick = () => modal.classList.add('hidden')
+    window.onclick = e => {
+      if (e.target === modal) modal.classList.add('hidden')
     }
 
     fetchStatuses()

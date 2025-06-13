@@ -27,8 +27,7 @@ const webhookId = '1382821667524448448'
 const webhookToken = '0iKn7OFm2hP2SBYOMH9VWb_wx7pKxVbjAIhUvVICKDxPRuVXdT1bPRYlXFceV-_8cfmO'
 const webhookBaseUrl = `https://discord.com/api/webhooks/${webhookId}/${webhookToken}`
 
-// это id одного уже созданного сообщения (скопируй из Discord ссылки)
-const messageId = '1382822541583716435'
+const messageId = '1383036608558923837'
 
 let statuses = {}
 let lastStatuses = {}

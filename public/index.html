@@ -5,23 +5,97 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Downdetector</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background-color: #0d1117;
+      color: #c9d1d9;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #58a6ff;
+    }
+
+    .status-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
+      border-radius: 8px;
+      background-color: #161b22;
+      transition: background-color 0.3s ease;
+      cursor: pointer;
+    }
+
+    .status:hover {
+      background-color: #21262d;
+    }
+
+    .status.up {
+      border-left: 4px solid #57f287;
+    }
+
+    .status.down {
+      border-left: 4px solid #ed4245;
+    }
+
+    .status img {
+      width: 24px;
+      height: 24px;
+      margin-right: 12px;
+      border-radius: 4px;
+      background: white;
+    }
+  </style>
 </head>
 <body>
   <h1>📡 Service Status</h1>
   <div id="statuses" class="status-box"></div>
 
   <script>
+    const iconMap = {
+      "Google": "https://www.google.com/favicon.ico",
+      "YouTube": "https://www.youtube.com/s/desktop/13d1a299/img/favicon.ico",
+      "Discord": "https://discord.com/assets/847541504914fd33810e70a0ea73177e.ico",
+      "Spotify": "https://www.scdn.co/i/_global/favicon.png",
+      "NPM": "https://www.npmjs.com/favicon.ico",
+      "AWS": "https://aws.amazon.com/favicon.ico",
+      "Roblox": "https://images.rbxcdn.com/6c6a8c7b84cadd9cbba3f3994f3c30e5-favicon.ico",
+      "OpenAI": "https://openai.com/favicon.ico",
+      "Steam": "https://store.steampowered.com/favicon.ico",
+      "Reddit": "https://www.redditstatic.com/desktop2x/img/favicon/favicon-32x32.png",
+      "Twitch": "https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c94346.png",
+      "ExitLag": "https://www.exitlag.com/favicon.ico",
+      "Epic Games": "https://static-assets-prod.epicgames.com/favicon.ico",
+      "Netflix": "https://assets.nflxext.com/us/ffe/siteui/common/icons/nficon2016.ico",
+      "X (Twitter)": "https://abs.twimg.com/favicons/twitter.ico"
+    }
+
     async function fetchStatuses() {
       const res = await fetch('/status')
       const data = await res.json()
-
       const container = document.getElementById('statuses')
       container.innerHTML = ''
 
       for (const [name, up] of Object.entries(data)) {
         const div = document.createElement('div')
         div.className = 'status ' + (up ? 'up' : 'down')
-        div.textContent = `${name}: ${up ? 'UP ✅' : 'DOWN ❌'}`
+
+        const img = document.createElement('img')
+        img.src = iconMap[name] || 'https://via.placeholder.com/24'
+
+        const span = document.createElement('span')
+        span.textContent = `${name}: ${up ? 'UP ✅' : 'DOWN ❌'}`
+
+        div.appendChild(img)
+        div.appendChild(span)
         container.appendChild(div)
       }
     }

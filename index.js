@@ -20,7 +20,9 @@ const services = [
   { name: 'ExitLag', url: 'https://www.exitlag.com' },
   { name: 'Epic Games', url: 'https://www.epicgames.com' },
   { name: 'Netflix', url: 'https://www.netflix.com' },
-  { name: 'X (Twitter)', url: 'https://twitter.com' }
+  { name: 'X (Twitter)', url: 'https://twitter.com' },
+  { name: 'DMenu GT', url: 'https://www.dmenu.me/Download/DMenuAutoUpdate.dll'},
+  { name: 'DMenu CS', url: 'https://cs.dmenu.me'}
 ]
 
 const webhookId = '1382821667524448448'

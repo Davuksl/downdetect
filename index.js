@@ -21,36 +21,45 @@ const services = [
   { name: 'Epic Games', url: 'https://www.epicgames.com' },
   { name: 'Netflix', url: 'https://www.netflix.com' },
   { name: 'X (Twitter)', url: 'https://twitter.com' },
-  { name: 'DMenu GT', url: 'https://www.dmenu.me/Download/DMenuAutoUpdate.dll'},
-  { name: 'DMenu CS', url: 'https://cs.dmenu.me'}
+  { name: 'DMenu GT', url: 'https://www.dmenu.me/Download/DMenuAutoUpdate.dll' },
+  { name: 'DMenu CS', url: 'https://cs.dmenu.me' }
 ]
 
 const webhookId = '1382821667524448448'
 const webhookToken = '0iKn7OFm2hP2SBYOMH9VWb_wx7pKxVbjAIhUvVICKDxPRuVXdT1bPRYlXFceV-_8cfmO'
 const webhookBaseUrl = `https://discord.com/api/webhooks/${webhookId}/${webhookToken}`
-
 const messageId = '1383036608558923837'
 
 let statuses = {}
 let lastStatuses = {}
 
 async function updateDiscordEmbed() {
-  const fields = Object.entries(statuses).map(([name, up]) => ({
-    name,
-    value: up ? '✅ UP' : '❌ DOWN',
-    inline: true
-  }))
+  const maxFields = 25
+  const embeds = []
+  let current = []
 
-  const embed = {
-    title: '📡 Service Status Monitor',
-    color: Object.values(statuses).some(v => !v) ? 0xED4245 : 0x57F287,
-    timestamp: new Date().toISOString(),
-    fields
+  for (const [name, up] of Object.entries(statuses)) {
+    current.push({ name, value: up ? '✅ UP' : '❌ DOWN', inline: true })
+    if (current.length === maxFields) {
+      embeds.push({
+        title: '📡 Service Status Monitor',
+        color: Object.values(statuses).some(v => !v) ? 0xED4245 : 0x57F287,
+        timestamp: new Date().toISOString(),
+        fields: current
+      })
+      current = []
+    }
+  }
+  if (current.length > 0) {
+    embeds.push({
+      title: '📡 Service Status Monitor',
+      color: Object.values(statuses).some(v => !v) ? 0xED4245 : 0x57F287,
+      timestamp: new Date().toISOString(),
+      fields: current
+    })
   }
 
-  await axios.patch(`${webhookBaseUrl}/messages/${messageId}`, {
-    embeds: [embed]
-  }).catch(err => {
+  await axios.patch(`${webhookBaseUrl}/messages/${messageId}`, { embeds }).catch(err => {
     console.error('[UPDATE FAIL]', err.response?.data || err.message)
   })
 }
@@ -92,4 +101,6 @@ app.get('/status', (req, res) => {
   res.json(statuses)
 })
 
-app.listen(port)
+app.listen(port, () => {
+  console.log(`Service Monitor running on http://localhost:${port}`)
+})
